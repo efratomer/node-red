@@ -352,14 +352,32 @@ RED.nodes = (function() {
             sf.name = subflowName;
         }
         subflows[sf.id] = sf;
+        console.log("registerType subflow createNewIds="+createNewIds);
+        console.log(sf);
+        var defaultArguments = [];
+        /*
+        arguments: function() {
+            var args = [];
+            sf.arguments.forEach(function(p) {
+                args.push({n:p.k, c:p.v}); // TODO: Do with map function instead
+            });
+
+            return args;
+        },
+        */
+
         RED.nodes.registerType("subflow:"+sf.id, {
-            defaults:{name:{value:""}},
+            defaults:{
+                name:{value:""},
+                arguments:{value:[]}
+            },
             info: sf.info,
             icon: function() { return sf.icon||"subflow.png" },
             category: sf.category || "subflows",
             inputs: sf.in.length,
             outputs: sf.out.length,
             color: "#da9",
+            arguments: sf.arguments,
             label: function() { return this.name||RED.nodes.subflow(sf.id).name },
             labelStyle: function() { return this.name?"node_label_italic":""; },
             paletteLabel: function() { return RED.nodes.subflow(sf.id).name },
@@ -367,6 +385,73 @@ RED.nodes = (function() {
             outputLabels: function(i) { return sf.outputLabels?sf.outputLabels[i]:null },
             set:{
                 module: "node-red"
+            },
+            oneditprepare: function() {
+                var node = this;
+
+                console.log("on edit instance");
+                console.log(node);
+
+                function resizeArgument(argument) {
+                    var newWidth = argument.width();
+                    argument.find('.red-ui-typedInput').typedInput("width",newWidth-130);
+                }
+                $('#node-input-args-container').css('min-height','100px').css('min-width','450px').editableList({
+                    addItem: function(container,i,opt) {
+                        var argument = opt;
+                        if (!argument.hasOwnProperty('v')) {
+                            argument.v = "";
+                        }
+
+                        var row = $('<div/>',{style:"padding-left:10px; box-sizing:border-box;"})
+                        .html("<label><i class=\"fa fa-tag\"></i> <span>"+argument.n+"</span>")
+                        .appendTo(container);
+                        var argumentValue = $('<input/>',{class:"node-input-arg-value",type:"text"})
+                        .data("argName", argument.n)
+                        .appendTo(row);
+
+                        argumentValue.val(argument.v);
+
+                        resizeArgument(container);
+                    },
+                    resizeItem: resizeArgument,
+                    removable: false,
+                    sortable: false,
+                    addButton: false
+                });
+                
+                node._def.arguments.forEach(function(argumentName){
+                    var argumentValue = "";
+
+                    if (node.arguments && Array.isArray(node.arguments)) {
+                        for (var i = 0; i < node.arguments.length; i++) {
+                            var currArg = node.arguments[i];
+
+                            if (currArg.n === argumentName) {
+                                argumentValue = currArg.v;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    $("#node-input-args-container").editableList('addItem', {n:argumentName, v:argumentValue});
+                });
+            },
+            oneditsave: function() {
+                var arguments = $("#node-input-args-container").editableList('items');
+                var node = this;
+
+                node.arguments = [];
+                arguments.each(function(i) {
+                    var argument = $(this);
+                    var argumentName = argument.find(".node-input-arg-value").data("argName");
+                    var argumentValue = argument.find(".node-input-arg-value").val();
+
+                    node.arguments.push({n:argumentName, v:argumentValue});
+                });
+
+                console.log("save");
+                console.log(this);
             }
         });
         sf._def = RED.nodes.getType("subflow:"+sf.id);
@@ -512,7 +597,7 @@ RED.nodes = (function() {
         }
         return node;
     }
-
+    // Convert subflow template to JSON for saving
     function convertSubflow(n) {
         var node = {};
         node.id = n.id;
@@ -522,6 +607,7 @@ RED.nodes = (function() {
         node.category = n.category;
         node.in = [];
         node.out = [];
+        node.arguments = n.arguments;
 
         n.in.forEach(function(p) {
             var nIn = {x:p.x,y:p.y,wires:[]};
@@ -989,6 +1075,7 @@ RED.nodes = (function() {
                     if (n.type.substring(0,7) === "subflow") {
                         var parentId = n.type.split(":")[1];
                         var subflow = subflow_blacklist[parentId]||subflow_map[parentId]||getSubflow(parentId);
+
                         if (createNewIds) {
                             parentId = subflow.id;
                             node.type = "subflow:"+parentId;
@@ -996,6 +1083,7 @@ RED.nodes = (function() {
                             delete node.i;
                         }
                         node.name = n.name;
+                        node.arguments = n.arguments;
                         node.outputs = subflow.out.length;
                         node.inputs = subflow.in.length;
                     } else {
@@ -1083,6 +1171,11 @@ RED.nodes = (function() {
                     if (node.type === "unknown" || node._def.category !== "config") {
                         new_nodes.push(node);
                     }
+
+                    console.log("test");
+                    console.log(node);
+                    var flowContext = node.context()["flow"];
+                    flowContext.set("param1", "thisVal");
                 }
             }
         }

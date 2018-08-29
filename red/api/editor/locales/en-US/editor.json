@@ -242,6 +242,7 @@
         "info": "Description",
         "category": "Category",
         "format":"markdown format",
+        "arguments": "Arguments",
         "errors": {
             "noNodesSelected": "<strong>Cannot create subflow</strong>: no nodes selected",
             "multipleInputsToSelection": "<strong>Cannot create subflow</strong>: multiple inputs to selection"

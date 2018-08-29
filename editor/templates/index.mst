@@ -125,6 +125,12 @@
         <label for="node-input-name" data-i18n="[append]editor:common.label.name"><i class="fa fa-tag"></i> </label>
         <input type="text" id="node-input-name">
     </div>
+    <div class="form-row" style="margin-bottom:0;">
+        <label><i class="fa fa-list"></i> <span data-i18n="editor:subflow.arguments"></span></label>
+    </div>
+    <div class="form-row node-input-args-container-row">
+        <ol id="node-input-args-container"></ol>
+    </div>
 </script>
 
 <script type="text/x-red" data-template-name="subflow-template">
@@ -142,6 +148,12 @@
     </div>
     <div class="form-row node-text-editor-row">
         <div style="height: 250px;" class="node-text-editor" id="subflow-input-info-editor"></div>
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+        <label><i class="fa fa-list"></i> <span data-i18n="editor:subflow.arguments"></span></label>
+    </div>
+    <div class="form-row subflow-input-args-container-row">
+        <ol id="subflow-input-args-container"></ol>
     </div>
     <div class="form-row form-tips" id="subflow-dialog-user-count"></div>
 </script>

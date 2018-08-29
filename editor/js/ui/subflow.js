@@ -406,7 +406,8 @@ RED.subflow = (function() {
             name:name,
             info:"",
             in: [],
-            out: []
+            out: [],
+            arguments: []
         };
         RED.nodes.addSubflow(subflow);
         RED.history.push({
@@ -525,7 +526,8 @@ RED.subflow = (function() {
                 i:index,
                 id:RED.nodes.id(),
                 wires:[{id:v.source.id,port:v.sourcePort}]
-            }})
+            }}),
+            arguments: []
         };
 
         RED.nodes.addSubflow(subflow);

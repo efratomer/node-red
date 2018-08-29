@@ -1706,6 +1706,7 @@ RED.editor = (function() {
                         if (updateLabels(editing_node, changes, null)) {
                             changed = true;
                         }
+
                         var icon = $("#node-settings-icon").text()||"";
                         if ((editing_node.icon === undefined && icon !== "node-red/subflow.png") ||
                             (editing_node.icon !== undefined && editing_node.icon !== icon)) {
@@ -1713,6 +1714,7 @@ RED.editor = (function() {
                             editing_node.icon = icon;
                             changed = true;
                         }
+
                         var newCategory = $("#subflow-input-category").val().trim();
                         if (newCategory === "_custom_") {
                             newCategory = $("#subflow-input-custom-category").val().trim();
@@ -1726,6 +1728,27 @@ RED.editor = (function() {
                         if (newCategory != editing_node.category) {
                             changes['category'] = editing_node.category;
                             editing_node.category = newCategory;
+                            changed = true;
+                        }
+
+                        var arguments = $("#subflow-input-args-container").editableList('items');
+                        var argumentsChanged = false;
+                        var argumentsNames = [];
+                        arguments.each(function(i) {
+                            var argument = $(this);
+                            var argumentName = argument.find(".subflow-input-arg-property-name").val();
+
+                            argumentsNames.push(argumentName);
+                            if (!argumentsChanged && editing_node.arguments.indexOf(argumentName) == -1)
+                                argumentsChanged = true;
+                        });
+
+                        if (editing_node.arguments.length != argumentsNames.length)
+                            argumentsChanged = true;
+
+                        if (argumentsChanged) {
+                            changes['arguments'] = editing_node.arguments;
+                            editing_node.arguments = argumentsNames;
                             changed = true;
                         }
 
@@ -1824,7 +1847,6 @@ RED.editor = (function() {
                 $("#subflow-input-category").append($("<option></option>").attr('disabled',true).text("---"));
                 $("#subflow-input-category").append($("<option></option>").val("_custom_").text(RED._("palette.addCategory")));
 
-
                 $("#subflow-input-category").change(function() {
                     var val = $(this).val();
                     if (val === "_custom_") {
@@ -1836,10 +1858,38 @@ RED.editor = (function() {
                     }
                 })
 
-
                 $("#subflow-input-category").val(subflow.category||"subflows");
 
                 subflowEditor.getSession().setValue(subflow.info||"",-1);
+
+                function resizeArgument(argument) {
+                    var newWidth = argument.width();
+                    argument.find('.red-ui-typedInput').typedInput("width",newWidth-130);
+                }
+
+                $('#subflow-input-args-container').css('min-height','100px').css('min-width','450px').editableList({
+                    addItem: function(container,i,opt) {
+                        var argumentName = opt;
+                        var row = $('<div/>',{style:"margin-top:8px;"}).appendTo(container);
+                        
+                        var argument = $('<input/>',{class:"subflow-input-arg-property-name",type:"text"})
+                        .appendTo(row);
+
+                        if (typeof opt === 'string')
+                            argument.val(argumentName);
+
+                        resizeArgument(container);
+                    },
+                    resizeItem: resizeArgument,
+                    removable: true,
+                    sortable: false
+                });
+                
+                for (var i = 0; i < subflow.arguments.length; i++) {
+                    var argument = subflow.arguments[i];
+                    $("#subflow-input-args-container").editableList('addItem', argument);
+                }
+
                 var userCount = 0;
                 var subflowType = "subflow:"+editing_node.id;
 
